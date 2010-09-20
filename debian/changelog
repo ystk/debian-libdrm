@@ -1,0 +1,417 @@
+libdrm (2.4.21-1~squeeze3) unstable; urgency=low
+
+  * Update kernel drm headers.
+
+ -- Julien Cristau <jcristau@debian.org>  Mon, 20 Sep 2010 16:51:11 +0200
+
+libdrm (2.4.21-1~squeeze2) unstable; urgency=low
+
+  [ Sven Joachim ]
+  * Restore 04_fix_nouveau_bo_new_tile_segfault.diff, actually only half
+    applied upstream.
+
+ -- Julien Cristau <jcristau@debian.org>  Wed, 25 Aug 2010 12:20:40 +0200
+
+libdrm (2.4.21-1~squeeze1) unstable; urgency=low
+
+  * Revert nouveau ABI update.
+  * Don't build libkms and vmwgfx.
+  * Drop 04_fix_nouveau_bo_new_tile_segfault.diff, applied upstream.
+
+ -- Julien Cristau <jcristau@debian.org>  Tue, 24 Aug 2010 19:47:57 +0200
+
+libdrm (2.4.21-1) experimental; urgency=low
+
+  [ Christopher James Halse Rogers ]
+  * debian/rules:
+    - Add libkms to build
+    - Build vmwgfx experimental API.  The drm module is available in the 2.6.34
+      kernel so we might as well build the userspace bits.
+  * debian/control:
+    - Add libkms1, libkms1-dbg packages on linux
+  * debian/patches/02_build_libkms_against_in_tree_drm:
+    - Link libkms against libdrm as it uses symbols from libdrm.
+
+  [ Robert Hooker ]
+  * New upstream release.
+  * Refresh 02_build_libkms_against_in_tree_drm.
+  * Update libdrm-intel1.symbols, libdrm-radeon1.symbols and shlibs.
+
+  [ Julien Cristau ]
+  * Update the copyright file to hopefully include all licenses variations and
+    copyright statements from the source tree.
+  * Mark new libdrm_radeon symbols private.  They shouldn't actually be
+    exported.
+  * Same with libkms.  Also don't set a minimum version to 2.4.20, since we
+    didn't ship it before anyway.
+
+ -- Julien Cristau <jcristau@debian.org>  Thu, 10 Jun 2010 23:24:54 +0200
+
+libdrm (2.4.20-3) experimental; urgency=low
+
+  [ Sven Joachim ]
+  * Update libdrm-nouveau1 to the ABI of Linux 2.6.34.
+    - Drop 03_revert_abi_change.diff.
+    - Bump libdrm-nouveau shlibs and symbols versions to 2.4.20-3~
+      to ensure that packages built against this version are not used
+      with an older libdrm-nouveau1 version.
+    - Add versioned Breaks against xserver-xorg-video-nouveau to force
+      an upgrade of that package and prevent X segfaults.
+  * Include full SONAME in libdrm-nouveau1.install.
+  * Update xsfbs to 81fc271788605b52e85c2d11635a0371fb44605e0.
+
+ -- Julien Cristau <jcristau@debian.org>  Wed, 26 May 2010 10:33:22 +0200
+
+libdrm (2.4.20-2) experimental; urgency=low
+
+  * Upload again, faking a new upstream version, since a screw-up on
+    ftpmaster side trashed all files from experimental.
+
+ -- Cyril Brulebois <kibi@debian.org>  Wed, 28 Apr 2010 01:54:44 +0200
+
+libdrm (2.4.20-1) experimental; urgency=low
+
+  * New upstream release.
+    + Cherry-pick upstream fixes 107ccd92 and 332739e3.
+  * Update libdrm-intel1.symbols, libdrm-radeon1.symbols and shlibs.
+  * Disable libkms for now.
+
+ -- Brice Goglin <bgoglin@debian.org>  Fri, 16 Apr 2010 07:14:41 +0200
+
+libdrm (2.4.18-6) unstable; urgency=medium
+
+  [ Sven Joachim ]
+  * New patch 04_fix_nouveau_bo_new_tile_segfault.diff, backported from
+    upstream commit df32c307e8f81b46ee8aa4dd7222fc18f175bbb3.  Fixes
+    segfault in nouveau_bo_new_tile() failure path (see #579425).
+  * Update xsfbs to 81fc271788605b52e85c2d11635a0371fb44605e0.
+
+ -- Julien Cristau <jcristau@debian.org>  Wed, 16 Jun 2010 12:21:58 +0100
+
+libdrm (2.4.18-5) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Cyril Brulebois <kibi@debian.org>  Wed, 14 Apr 2010 13:02:34 +0200
+
+libdrm (2.4.18-4) experimental; urgency=low
+
+  * Steal 03_revert_abi_change.diff from Ubuntu to revert the nouveau ABI
+    change.  Current Debian kernels support only the old ABI.
+    Thanks Sven Joachim!
+  * Build a libdrm-nouveau1 package on Linux architectures (Closes: #568162).
+    Patch adapted from the Ubuntu package. Thanks Sven Joachim!
+
+ -- Brice Goglin <bgoglin@debian.org>  Wed, 24 Mar 2010 22:27:00 +0100
+
+libdrm (2.4.18-3) unstable; urgency=low
+
+  * Include full SONAME in libdrm*.install to prevent accidental breakage.
+  * Add back the drm headers in libdrm-dev.
+
+ -- Julien Cristau <jcristau@debian.org>  Tue, 16 Mar 2010 12:28:50 +0100
+
+libdrm (2.4.18-2) unstable; urgency=low
+
+  * Fix FTBFS on non-Linux architectures (Closes: #570851): Replace
+    --{enable,disable}-radeon-experimental-api configure flag with
+    --{enable,disable}-radeon since it got renamed.
+  * Add ${misc:Depends} where it was missing, and fold all Depends.
+  * Bump Standards-Version from 3.8.3 to 3.8.4 (no changes needed).
+  * Add myself to Uploaders.
+
+ -- Cyril Brulebois <kibi@debian.org>  Mon, 22 Feb 2010 15:31:47 +0100
+
+libdrm (2.4.18-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Brice Goglin <bgoglin@debian.org>  Thu, 18 Feb 2010 08:06:14 +0100
+
+libdrm (2.4.17-1) unstable; urgency=low
+
+  [ Julien Cristau ]
+  * New upstream release, closes: #560434, #567831.
+  * Update patch 01_default_perms.diff to account for upstream move of libdrm
+    to toplevel.
+  * Update libdrm2.symbols and shlibs.
+  * Update libdrm-intel1.symbols and shlibs.
+  * Bump debhelper build-dep, we use dh_strip --remaining-packages (closes:
+    #558443).  Thanks, Sergio Gelato!
+  * Enable libdrm_radeon, interface to kernel graphics memory management on
+    radeon (closes: #558786).
+  * Rename the build directory to not include DEB_BUILD_GNU_TYPE for no
+    good reason.  Thanks, Colin Watson!
+  * Remove myself from Uploaders
+
+  [ Brice Goglin ]
+  * Bump linux-libc-dev dependency to 2.6.32, thanks Piotr Engelking,
+    closes: #561224.
+  * Add libdrm-radeon1 symbols and update shlibs.
+  * Update debian/copyright.
+
+  [ Timo Aaltonen ]
+  * Update libdrm2.symbols and shlibs.
+
+ -- Brice Goglin <bgoglin@debian.org>  Sun, 31 Jan 2010 20:12:38 +0100
+
+libdrm (2.4.15-1) unstable; urgency=low
+
+  * New upstream release.
+    + update libdrm-intel1 symbols and shlibs
+  * Only build libdrm-intel on x86 (linux and kfreebsd).
+
+ -- Julien Cristau <jcristau@debian.org>  Mon, 23 Nov 2009 17:00:57 +0100
+
+libdrm (2.4.14-1) unstable; urgency=low
+
+  * Parse space-separated DEB_BUILD_OPTIONS, and handle parallel=N.
+  * New upstream release.
+  * Bump Standards-Version to 3.8.3.
+
+ -- Julien Cristau <jcristau@debian.org>  Thu, 24 Sep 2009 21:53:09 +0200
+
+libdrm (2.4.13-1) unstable; urgency=low
+
+  [ Christopher James Halse Rogers ]
+  * debian/control:
+    + Remove scary 'built from DRM snapshot' warning from long description of
+      libdrm-intel1{,-dbg}
+
+  [ Julien Cristau ]
+  * New upstream release.
+  * Update libdrm-intel1.symbols.
+
+ -- Julien Cristau <jcristau@debian.org>  Sat, 05 Sep 2009 13:15:36 +0200
+
+libdrm (2.4.12-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Brice Goglin <bgoglin@debian.org>  Tue, 21 Jul 2009 15:29:03 +0200
+
+libdrm (2.4.11-1) unstable; urgency=low
+
+  * New upstream release.
+  * Also pull in additional fix for libdrm-intel: Only do BO caching up to
+    64MB objects.
+  * Update libdrm-intel1.symbols and bump shlibs.
+  * Add README.source from xsfbs.  Bump Standards-Version to 3.8.1.
+  * Remove Thierry Reding from Uploaders, he doesn't seem to be around anymore
+    :(
+
+ -- Julien Cristau <jcristau@debian.org>  Mon, 08 Jun 2009 16:22:04 +0200
+
+libdrm (2.4.9-2) unstable; urgency=low
+
+  * Ship all drm headers on kfreebsd, again.
+  * Move -dbg packages to new debug section.
+
+ -- Julien Cristau <jcristau@debian.org>  Sun, 03 May 2009 18:55:42 +0200
+
+libdrm (2.4.9-1) unstable; urgency=low
+
+  [ Brice Goglin ]
+  * New upstream release.
+    + Remove buggy symlinks for the upstream tarball.
+  * Add myself to Uploaders.
+
+  [ Julien Cristau ]
+  * Make the linux-libc-dev dependency linux-only (closes: #521253).  Thanks,
+    Petr Salinger!
+
+ -- Brice Goglin <bgoglin@debian.org>  Sat, 11 Apr 2009 23:12:49 +0200
+
+libdrm (2.4.5-2) unstable; urgency=low
+
+  * Add drm_mode.h to the list of headers we don't ship.
+
+ -- Julien Cristau <jcristau@debian.org>  Wed, 25 Mar 2009 10:56:53 +0100
+
+libdrm (2.4.5-1) unstable; urgency=low
+
+  * New upstream release. (closes: #505740)
+
+  [ Timo Aaltonen ]
+  * debian/rules:
+    -Run autoreconf at build time, build-depend on automake and libtool.
+     (closes: #482727)
+    -Add a debian/libdrm2.symbols file and '-c4' parameter to dh_makeshlibs
+     to fail if new symbols are added. Don't use Debian versions for now.
+
+  [ Julien Cristau ]
+  * Add a new package for the intel-specific bits (libdrm-intel1)
+  * Build-depend on pkg-config and libpthread-stubs0-dev (closes: #502078).
+    Thanks, Frank Lichtenheld!
+  * Don't mention *.la in libdrm-dev.install.
+  * Make libdrm-dev depend on libdrm-intel1 on x86.
+  * On Linux, let udev create the device files.
+  * Let linux-libc-dev provide some drm headers, drop them from libdrm-dev.
+    Add dependency on linux-libc-dev >= 2.6.28.
+  * Set libdrm2 shlibs to 2.4.3, libdrm-intel1 shlibs to 2.4.5.  Update
+    symbols files.
+
+ -- Julien Cristau <jcristau@debian.org>  Tue, 24 Mar 2009 22:20:50 +0100
+
+libdrm (2.3.1-2) unstable; urgency=high
+
+  * Remove from the source package a bunch of files that are only used by the
+    kernel drm component.  This gets rid of the mga, r128 and radeon
+    microcode, and thus closes: #502675.  Thanks, Ben Hutchings!
+
+ -- Julien Cristau <jcristau@debian.org>  Sun, 19 Oct 2008 14:26:37 +0200
+
+libdrm (2.3.1-1) unstable; urgency=low
+
+  [ Brice Goglin ]
+  * Update upstream URL in debian/copyright.
+  * Bump Standards-Version to 3.7.3 (no changes).
+  * Drop the XS- prefix from Vcs-Git and Vcs-Browser fields in debian/control.
+  * Install the upstream ChangeLog.
+
+  [ Julien Cristau ]
+  * New upstream release (needed for mesa 7.1 and newer xserver).
+  * Note: this release removes the memory manager (TTM) interface used by the
+    i915tex dri driver.
+  * debian/rules: don't call configure with --host if we're not
+    cross-building, and fix some rules dependencies.
+
+  [ Timo Aaltonen ]
+  * Bump the shlibs to 2.3.1.
+
+ -- Julien Cristau <jcristau@debian.org>  Sun, 13 Jul 2008 19:07:49 +0200
+
+libdrm (2.3.0-4) unstable; urgency=low
+
+  [ David Nusinow ]
+  * Add NEWS.Debian explaining the change in the last upload to interested
+    administrators.
+
+  [ Julien Cristau ]
+  * Upload to unstable.
+
+ -- Julien Cristau <jcristau@debian.org>  Fri, 20 Apr 2007 05:06:34 +0200
+
+libdrm (2.3.0-3) experimental; urgency=low
+
+  * Add myself to uploaders
+  * Patch libdrm to default to device permission 666 so we don't have to do it
+    in xorg.conf. The only way libdrm can do anything is through the server
+    anyway. This can still be overridden by a user's xorg.conf. This change
+    also requires adding quilt to the build-depends
+
+ -- David Nusinow <dnusinow@debian.org>  Sun, 15 Apr 2007 13:08:50 -0400
+
+libdrm (2.3.0-2) unstable; urgency=low
+
+  * Update my email address in debian/control.
+  * Add XS-Vcs-Git and XS-Vcs-Browser in debian/control.
+  * Upload to unstable.
+
+ -- Julien Cristau <jcristau@debian.org>  Thu, 12 Apr 2007 19:06:57 +0200
+
+libdrm (2.3.0-1) experimental; urgency=low
+
+  [ Thierry Reding ]
+  * New upstream release.
+  * Set the Debian X Strike Force as maintainer.
+  * Add myself to uploaders.
+  * Add a debugging symbol package for libdrm2.
+
+  [ Julien Cristau ]
+  * Bump shlibs to libdrm2 >= 2.3.0.
+  * Add myself to uploaders.
+  * Add build-dep on dpkg-dev >= 1.13.19 to make sure that the binary:Version
+    substvar is available.
+  * libdrm2-dbg depends on libdrm2 (= ${binary:Version}).
+  * Don't install libdrm.la, and use dh_install --list-missing.
+
+ -- Julien Cristau <julien.cristau@ens-lyon.org>  Thu,  4 Jan 2007 18:56:08 +0100
+
+libdrm (2.2.0-0.1) experimental; urgency=low
+
+  * Non-maintainer upload.
+  * New upstream release.
+  * Bump Standards-Version to 3.7.2, no changes required.
+  * Bump debhelper compatibility to 5 and adjust build-dependency.
+  * Don't try to install pkgconfig files from usr/share/pkgconfig because
+    there is nothing in that directory.
+
+ -- Thierry Reding <thierry@gilfi.de>  Sat, 18 Nov 2006 19:50:26 +0100
+
+libdrm (2.0.2-0.1) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * New upstream release (closes: #377166).
+    - Includes a fix for FTBFS on GNU/kFreeBSD (closes: #332994).
+  * Manually force static build.
+
+ -- Andres Salomon <dilinger@debian.org>  Sat, 23 Sep 2006 06:32:23 +0000
+
+libdrm (2.0.1-1) unstable; urgency=high
+
+  * New upstream release
+    - Fixes a pathological hash table smash discovered by the Coverity scanner
+    - updates the installed header files for various new #defines
+
+ -- David Nusinow <dnusinow@debian.org>  Tue,  4 Apr 2006 23:46:05 -0400
+
+libdrm (2.0-1) experimental; urgency=low
+
+  * First upload to Debian
+
+ -- David Nusinow <dnusinow@debian.org>  Thu,  5 Jan 2006 22:45:27 -0500
+
+libdrm (2.0-0ubuntu1) dapper; urgency=low
+
+  * New upstream release.
+  * Change binary package from libdrm1 to libdrm2, following soversion bump.
+
+ -- Daniel Stone <daniel.stone@ubuntu.com>  Mon, 12 Dec 2005 13:05:22 +1100
+
+libdrm (1.0.5-0ubuntu1) dapper; urgency=low
+
+  * New upstream version.
+
+ -- Daniel Stone <daniel.stone@ubuntu.com>  Wed,  2 Nov 2005 01:56:07 +1100
+
+libdrm (1.0.3-3) unstable; urgency=low
+
+  * Yay for understandable bug reports! *gmprf*
+  * debian/control:libdrm1 =~ s/development/runtime/ (closes: bug#325515)
+
+ -- Marcelo E. Magallon <mmagallo@debian.org>  Fri, 16 Sep 2005 09:46:05 -0600
+
+libdrm (1.0.3-2) unstable; urgency=low
+
+  * libdrm.pc.in: add -ldrm to Libs
+
+ -- Marcelo E. Magallon <mmagallo@debian.org>  Thu, 08 Sep 2005 20:49:01 -0600
+
+libdrm (1.0.3-1) unstable; urgency=low
+
+  * New upstream
+
+ -- Marcelo E. Magallon <mmagallo@debian.org>  Sun, 28 Aug 2005 11:12:07 -0600
+
+libdrm (1.0.2-3) unstable; urgency=low
+
+  * debian/control: it's "Direct Rendering Infraestructure".  I was rather
+    sure it stand for interface... thanks Michel.  (closes: bug#324514)
+  * debian/control: forgot to actually write this in the file.  Build-Depends
+    on libx11-dev.  Thanks Kurt (closes: bug#324560)
+
+ -- Marcelo E. Magallon <mmagallo@debian.org>  Sun, 28 Aug 2005 11:01:41 -0600
+
+libdrm (1.0.2-2) unstable; urgency=low
+
+  * Forgot to fix the other broken bit :-P
+
+ -- Marcelo E. Magallon <mmagallo@debian.org>  Fri, 19 Aug 2005 22:01:32 -0600
+
+libdrm (1.0.2-1) unstable; urgency=low
+
+  * Initial release. Closes: #324074
+
+ -- Marcelo E. Magallon <mmagallo@debian.org>  Fri, 19 Aug 2005 21:11:18 -0600
+
