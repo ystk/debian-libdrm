@@ -1,24 +1,235 @@
-libdrm (2.4.21-1~squeeze3) unstable; urgency=low
+libdrm (2.4.40-1~deb7u2) sid; urgency=low
 
-  * Update kernel drm headers.
+  * Fix FTBFS on kfreebsd:
+    - fix missing ETIME (cherry-picked from upstream)
+    - work around missing O_CLOEXEC
 
- -- Julien Cristau <jcristau@debian.org>  Mon, 20 Sep 2010 16:51:11 +0200
+ -- Julien Cristau <jcristau@debian.org>  Sun, 06 Jan 2013 12:46:52 +0100
 
-libdrm (2.4.21-1~squeeze2) unstable; urgency=low
+libdrm (2.4.40-1~deb7u1) sid; urgency=low
+
+  * Revert nouveau to the 2.4.33 state (ie before the rewrite).
+  * Revert addition of libdrm2-udeb.
+  * Bump libdrm2 shlibs to 2.4.38.
+
+ -- Julien Cristau <jcristau@debian.org>  Sat, 05 Jan 2013 22:28:45 +0100
+
+libdrm (2.4.40-1) experimental; urgency=low
+
+  [ Maarten Lankhorst ]
+  * New upstream release.
+    - Nouveau ABI change, replace libdrm-nouveau1a with libdrm-nouveau2.
+
+  [ Timo Aaltonen ]
+  * Bump libdrm-intel1's and libdrm-nouveau2's shlibs due to new symbols.
+  * Hardcode the version for libdrm-omap1's shlibs.
+
+  [ Christopher James Halse Rogers ]
+  * Add libdrm2-udeb; Xserver 1.13 wants libdrm for hotplug config, so
+    will be needed for the 1.13 xserver-xorg-core-udeb.
 
   [ Sven Joachim ]
-  * Restore 04_fix_nouveau_bo_new_tile_segfault.diff, actually only half
-    applied upstream.
+  * Bump libdrm-radeon1's symbols and shlibs.
+  * Mark some internal libdrm-nouveau2 symbols as private.
+  * Drop patch 02_build_libkms_against_in_tree_drm.diff, applied upstream.
 
- -- Julien Cristau <jcristau@debian.org>  Wed, 25 Aug 2010 12:20:40 +0200
+ -- Julien Cristau <jcristau@debian.org>  Sat, 17 Nov 2012 18:50:33 +0100
 
-libdrm (2.4.21-1~squeeze1) unstable; urgency=low
+libdrm (2.4.33-3) unstable; urgency=low
 
-  * Revert nouveau ABI update.
-  * Don't build libkms and vmwgfx.
-  * Drop 04_fix_nouveau_bo_new_tile_segfault.diff, applied upstream.
+  * Add missing dependency on libdrm-omap1 to libdrm-dev (thanks, Robert
+    Hooker!).  Make some arm matching a bit simpler.
 
- -- Julien Cristau <jcristau@debian.org>  Tue, 24 Aug 2010 19:47:57 +0200
+ -- Julien Cristau <jcristau@debian.org>  Thu, 21 Jun 2012 23:22:22 +0200
+
+libdrm (2.4.33-2) unstable; urgency=low
+
+  [ Sebastian Reichel ]
+  * Build libdrm_omap (closes: #667572).
+
+ -- Julien Cristau <jcristau@debian.org>  Thu, 21 Jun 2012 22:39:22 +0200
+
+libdrm (2.4.33-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Cyril Brulebois <kibi@debian.org>  Mon, 02 Apr 2012 01:28:22 +0000
+
+libdrm (2.4.32-1) unstable; urgency=low
+
+  [ Robert Hooker ]
+  * New upstream release (2.4.31).
+  * Bump libdrm2 and libdrm-radeon1 symbols and shlibs to account for
+    recent changes.
+
+  [ Cyril Brulebois ]
+  * New upstream release (2.4.32).
+  * Bump libdrm-intel1's symbols and shlibs accordingly.
+
+ -- Cyril Brulebois <kibi@debian.org>  Mon, 19 Mar 2012 19:56:12 +0000
+
+libdrm (2.4.30-1) unstable; urgency=low
+
+  * New upstream release.
+  * Bump libdrm2's and libdrm-intel1's symbols and shlibs accordingly.
+  * Document the symlink dance when building from git in README.source.
+
+ -- Cyril Brulebois <kibi@debian.org>  Fri, 06 Jan 2012 20:04:37 +0100
+
+libdrm (2.4.29-1) unstable; urgency=low
+
+  * New upstream release:
+    - assert()s are now gone (Closes: #651316).
+  * Update libdrm-intel1's symbols and shlibs accordingly.
+
+ -- Cyril Brulebois <kibi@debian.org>  Tue, 13 Dec 2011 13:16:22 +0100
+
+libdrm (2.4.28-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Cyril Brulebois <kibi@debian.org>  Tue, 06 Dec 2011 15:17:50 +0100
+
+libdrm (2.4.27-1) unstable; urgency=low
+
+  * New upstream release:
+    - Push the new Intel API for use by mesa.
+    - Usual bug fixes.
+  * Update libdrm-intel1's symbols and shlibs accordingly.
+
+ -- Cyril Brulebois <kibi@debian.org>  Tue, 01 Nov 2011 19:30:54 +0100
+
+libdrm (2.4.26-1) unstable; urgency=low
+
+  * New upstream release:
+    - Fix two important intel bugs.
+  * Add libpciaccess-dev build-dep.
+  * Update libdrm-intel1.symbols and shlibs for new aperture-related symbol.
+
+ -- Cyril Brulebois <kibi@debian.org>  Fri, 24 Jun 2011 17:07:04 +0200
+
+libdrm (2.4.25-3) unstable; urgency=low
+
+  * Team upload.
+
+  [ Steve Langasek ]
+  * Build for multiarch.
+
+  [ Julien Cristau ]
+  * Add lintian overrides for symbols-declares-dependency-on-other-package (we
+    use that for private symbols).
+  * Bump Standards-Version to 3.9.2.
+
+ -- Julien Cristau <jcristau@debian.org>  Thu, 09 Jun 2011 20:05:53 +0200
+
+libdrm (2.4.25-2) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Cyril Brulebois <kibi@debian.org>  Mon, 16 May 2011 19:14:49 +0200
+
+libdrm (2.4.25-1) experimental; urgency=low
+
+  * New upstream release.
+  * Update libdrm2.symbols and shlibs.
+  * Update libkms1.symbols, marking dumb_create@Base as private.
+  * Switch to dh:
+    - Bump compat/build-dep to 8.
+    - Use dh-autoreconf.
+    - Tidy old build-deps.
+    - Testsuite now automatically gets run.
+  * Accordingly, add a build-dep to fix FTBFS during make check:
+    - 03_build_against_librt.diff
+  * Add libudev-dev build-dep on Linux so that detection works.
+  * Since the testsuite just got enabled, let's not bail out if it fails.
+  * Remove xsfbs as it's no longer needed.
+  * Bump Standards-Version (no changes needed).
+
+ -- Cyril Brulebois <kibi@debian.org>  Tue, 19 Apr 2011 02:57:29 +0200
+
+libdrm (2.4.24-2) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Cyril Brulebois <kibi@debian.org>  Sun, 10 Apr 2011 22:57:02 +0200
+
+libdrm (2.4.24-1) experimental; urgency=low
+
+  [ Christopher James Halse Rogers ]
+  * New upstream release.
+  * Add new internal radeon symbols to libkms1.symbols
+
+  [ Cyril Brulebois ]
+  * Just as a reminder, not adding a lintian override for the following
+    warning, since patches were sent upstream to stop exporting private
+    symbols: symbols-declares-dependency-on-other-package
+
+ -- Cyril Brulebois <kibi@debian.org>  Sat, 05 Mar 2011 20:27:23 +0100
+
+libdrm (2.4.23-3) unstable; urgency=low
+
+  * Cherry-pick from upstream:
+    - intel: Fallback to old exec if no mrb_exec is available
+    - intel: Set the public handle after opening by name
+    - intel: Remember named bo
+  * The first of those fixes should fix some failures to submit batch
+    buffer (Closes: #612766).
+  * Bump dependency to 2.4.23-3 for the drm_intel_bo_mrb_exec symbol in
+    libdrm-intel1's symbols file. While the former version is alright
+    from a shared object point of view, runtime doesn't seem to agree
+    (Closes: #609299).
+  * Bump the libdrm-intel1 shlibs version for consistency.
+
+ -- Cyril Brulebois <kibi@debian.org>  Wed, 16 Feb 2011 11:44:44 +0100
+
+libdrm (2.4.23-2) unstable; urgency=low
+
+  * Upload to unstable.
+  * Update Uploaders list. Thanks, David & Brice!
+
+ -- Cyril Brulebois <kibi@debian.org>  Sat, 05 Feb 2011 11:26:44 +0100
+
+libdrm (2.4.23-1) experimental; urgency=low
+
+  [ Sven Joachim ]
+  * New upstream release.
+  * Rename the libdrm-nouveau1 package to libdrm-nouveau1a, since upstream
+    broke the ABI without changing the soname.
+    - Make libdrm-nouveau1a{,-dbg} conflict with libdrm-nouveau1{,-dbg} and
+      remove the Breaks against xserver-xorg-video-nouveau.
+    - Adjust the lintian override.
+    - Bump libdrm-nouveau shlibs and symbols versions to 2.4.23.
+  * Use dh_prep instead of the deprecated dh_clean -k in debian/rules.
+
+ -- Julien Cristau <jcristau@debian.org>  Thu, 23 Dec 2010 17:56:54 +0100
+
+libdrm (2.4.22-2) experimental; urgency=low
+
+  * Cherry-pick some commits from upstream to make the intel video driver
+    2.13.901 buildable:
+     - 057fab33: intel: Prepare for BLT ring split
+     - 36245771: intel: enable relaxed fence allocation for i915
+     - 49447a9b: intel: initialize bufmgr.bo_mrb_exec unconditionally
+
+ -- Cyril Brulebois <kibi@debian.org>  Sun, 07 Nov 2010 22:51:12 +0100
+
+libdrm (2.4.22-1) experimental; urgency=low
+
+  [ Sven Joachim ]
+  * New upstream release.
+
+ -- Cyril Brulebois <kibi@debian.org>  Sat, 02 Oct 2010 00:41:05 +0200
+
+libdrm (2.4.21-2) experimental; urgency=low
+
+  [ Sven Joachim ]
+  * Bump libdrm-nouveau shlibs and symbols versions to 2.4.21-1 to ensure
+    that packages built against this version are not used with squeeze's
+    libdrm-nouveau1.
+  * Add a lintian override for the symbols-file-contains-debian-revision
+    warning.  Bump debhelper compatibility level to 6 for dh_lintian.
+
+ -- Julien Cristau <jcristau@debian.org>  Wed, 25 Aug 2010 23:14:40 +0200
 
 libdrm (2.4.21-1) experimental; urgency=low
 
@@ -77,16 +288,6 @@ libdrm (2.4.20-1) experimental; urgency=low
   * Disable libkms for now.
 
  -- Brice Goglin <bgoglin@debian.org>  Fri, 16 Apr 2010 07:14:41 +0200
-
-libdrm (2.4.18-6) unstable; urgency=medium
-
-  [ Sven Joachim ]
-  * New patch 04_fix_nouveau_bo_new_tile_segfault.diff, backported from
-    upstream commit df32c307e8f81b46ee8aa4dd7222fc18f175bbb3.  Fixes
-    segfault in nouveau_bo_new_tile() failure path (see #579425).
-  * Update xsfbs to 81fc271788605b52e85c2d11635a0371fb44605e0.
-
- -- Julien Cristau <jcristau@debian.org>  Wed, 16 Jun 2010 12:21:58 +0100
 
 libdrm (2.4.18-5) unstable; urgency=low
 

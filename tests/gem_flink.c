@@ -96,7 +96,7 @@ test_bad_flink(int fd)
 
 	flink.handle = 0x10101010;
 	ret = ioctl(fd, DRM_IOCTL_GEM_FLINK, &flink);
-	assert(ret == -1 && errno == EBADF);
+	assert(ret == -1 && errno == ENOENT);
 }
 
 static void
@@ -117,10 +117,15 @@ int main(int argc, char **argv)
 {
 	int fd;
 
+	if (geteuid()) {
+		fprintf(stderr, "requires root privileges, skipping\n");
+		return 77;
+	}
+
 	fd = drm_open_matching("8086:*", 0);
 	if (fd < 0) {
 		fprintf(stderr, "failed to open intel drm device, skipping\n");
-		return 0;
+		return 77;
 	}
 
 	test_flink(fd);

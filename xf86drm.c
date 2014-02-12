@@ -155,23 +155,6 @@ void drmFree(void *pt)
 	free(pt);
 }
 
-/* drmStrdup can't use strdup(3), since it doesn't call _DRM_MALLOC... */
-static char *drmStrdup(const char *s)
-{
-    char *retval;
-
-    if (!s)
-        return NULL;
-
-    retval = malloc(strlen(s)+1);
-    if (!retval)
-        return NULL;
-
-    strcpy(retval, s);
-
-    return retval;
-}
-
 /**
  * Call ioctl, restarting if it is interupted
  */
@@ -229,7 +212,7 @@ drmHashEntry *drmGetEntry(int fd)
  * PCI:b:d:f format and the newer pci:oooo:bb:dd.f format.  In the format, o is
  * domain, b is bus, d is device, f is function.
  */
-static int drmMatchBusID(const char *id1, const char *id2)
+static int drmMatchBusID(const char *id1, const char *id2, int pci_domain_ok)
 {
     /* First, check if the IDs are exactly the same */
     if (strcasecmp(id1, id2) == 0)
@@ -256,6 +239,13 @@ static int drmMatchBusID(const char *id1, const char *id2)
 	    if (ret != 3)
 		return 0;
 	}
+
+	/* If domains aren't properly supported by the kernel interface,
+	 * just ignore them, which sucks less than picking a totally random
+	 * card with "open by name"
+	 */
+	if (!pci_domain_ok)
+		o1 = o2 = 0;
 
 	if ((o1 != o2) || (b1 != b2) || (d1 != d2) || (f1 != f2))
 	    return 0;
@@ -380,6 +370,7 @@ wait_for_udev:
     if (fd >= 0)
 	return fd;
 
+#if !defined(UDEV)
     /* Check if the device node is not what we expect it to be, and recreate it
      * and try again if so.
      */
@@ -401,6 +392,7 @@ wait_for_udev:
 
     drmMsg("drmOpenDevice: Open failed\n");
     remove(buf);
+#endif
     return -errno;
 }
 
@@ -482,7 +474,7 @@ int drmAvailable(void)
  */
 static int drmOpenByBusid(const char *busid)
 {
-    int        i;
+    int        i, pci_domain_ok = 1;
     int        fd;
     const char *buf;
     drmSetVersion sv;
@@ -492,14 +484,27 @@ static int drmOpenByBusid(const char *busid)
 	fd = drmOpenMinor(i, 1, DRM_NODE_RENDER);
 	drmMsg("drmOpenByBusid: drmOpenMinor returns %d\n", fd);
 	if (fd >= 0) {
+	    /* We need to try for 1.4 first for proper PCI domain support
+	     * and if that fails, we know the kernel is busted
+	     */
 	    sv.drm_di_major = 1;
-	    sv.drm_di_minor = 1;
+	    sv.drm_di_minor = 4;
 	    sv.drm_dd_major = -1;	/* Don't care */
 	    sv.drm_dd_minor = -1;	/* Don't care */
-	    drmSetInterfaceVersion(fd, &sv);
+	    if (drmSetInterfaceVersion(fd, &sv)) {
+#ifndef __alpha__
+		pci_domain_ok = 0;
+#endif
+		sv.drm_di_major = 1;
+		sv.drm_di_minor = 1;
+		sv.drm_dd_major = -1;       /* Don't care */
+		sv.drm_dd_minor = -1;       /* Don't care */
+		drmMsg("drmOpenByBusid: Interface 1.4 failed, trying 1.1\n",fd);
+		drmSetInterfaceVersion(fd, &sv);
+	    }
 	    buf = drmGetBusid(fd);
 	    drmMsg("drmOpenByBusid: drmGetBusid reports %s\n", buf);
-	    if (buf && drmMatchBusID(buf, busid)) {
+	    if (buf && drmMatchBusID(buf, busid, pci_domain_ok)) {
 		drmFreeBusid(buf);
 		return fd;
 	    }
@@ -706,11 +711,11 @@ static void drmCopyVersion(drmVersionPtr d, const drm_version_t *s)
     d->version_minor      = s->version_minor;
     d->version_patchlevel = s->version_patchlevel;
     d->name_len           = s->name_len;
-    d->name               = drmStrdup(s->name);
+    d->name               = strdup(s->name);
     d->date_len           = s->date_len;
-    d->date               = drmStrdup(s->date);
+    d->date               = strdup(s->date);
     d->desc_len           = s->desc_len;
-    d->desc               = drmStrdup(s->desc);
+    d->desc               = strdup(s->desc);
 }
 
 
@@ -805,6 +810,18 @@ drmVersionPtr drmGetLibVersion(int fd)
     return (drmVersionPtr)version;
 }
 
+int drmGetCap(int fd, uint64_t capability, uint64_t *value)
+{
+	struct drm_get_cap cap = { capability, 0 };
+	int ret;
+
+	ret = drmIoctl(fd, DRM_IOCTL_GET_CAP, &cap);
+	if (ret)
+		return ret;
+
+	*value = cap.value;
+	return 0;
+}
 
 /**
  * Free the bus ID information.
@@ -959,7 +976,7 @@ int drmAddMap(int fd, drm_handle_t offset, drmSize size, drmMapType type,
     if (drmIoctl(fd, DRM_IOCTL_ADD_MAP, &map))
 	return -errno;
     if (handle)
-	*handle = (drm_handle_t)map.handle;
+	*handle = (drm_handle_t)(uintptr_t)map.handle;
     return 0;
 }
 
@@ -967,7 +984,7 @@ int drmRmMap(int fd, drm_handle_t handle)
 {
     drm_map_t map;
 
-    map.handle = (void *)handle;
+    map.handle = (void *)(uintptr_t)handle;
 
     if(drmIoctl(fd, DRM_IOCTL_RM_MAP, &map))
 	return -errno;
@@ -2103,7 +2120,7 @@ int drmAddContextPrivateMapping(int fd, drm_context_t ctx_id,
     drm_ctx_priv_map_t map;
 
     map.ctx_id = ctx_id;
-    map.handle = (void *)handle;
+    map.handle = (void *)(uintptr_t)handle;
 
     if (drmIoctl(fd, DRM_IOCTL_SET_SAREA_CTX, &map))
 	return -errno;
@@ -2120,7 +2137,7 @@ int drmGetContextPrivateMapping(int fd, drm_context_t ctx_id,
     if (drmIoctl(fd, DRM_IOCTL_GET_SAREA_CTX, &map))
 	return -errno;
     if (handle)
-	*handle = (drm_handle_t)map.handle;
+	*handle = (drm_handle_t)(uintptr_t)map.handle;
 
     return 0;
 }
@@ -2523,5 +2540,36 @@ char *drmGetDeviceNameFromFd(int fd)
 	if (i == DRM_MAX_MINOR)
 		return NULL;
 
-	return drmStrdup(name);
+	return strdup(name);
 }
+
+int drmPrimeHandleToFD(int fd, uint32_t handle, uint32_t flags, int *prime_fd)
+{
+	struct drm_prime_handle args;
+	int ret;
+
+	args.handle = handle;
+	args.flags = flags;
+	ret = drmIoctl(fd, DRM_IOCTL_PRIME_HANDLE_TO_FD, &args);
+	if (ret)
+		return ret;
+
+	*prime_fd = args.fd;
+	return 0;
+}
+
+int drmPrimeFDToHandle(int fd, int prime_fd, uint32_t *handle)
+{
+	struct drm_prime_handle args;
+	int ret;
+
+	args.fd = prime_fd;
+	args.flags = 0;
+	ret = drmIoctl(fd, DRM_IOCTL_PRIME_FD_TO_HANDLE, &args);
+	if (ret)
+		return ret;
+
+	*handle = args.handle;
+	return 0;
+}
+
