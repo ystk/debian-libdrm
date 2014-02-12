@@ -330,6 +330,7 @@ static int cs_gem_end(struct radeon_cs_int *cs,
     return 0;
 }
 
+#if CS_BOF_DUMP
 static void cs_gem_dump_bof(struct radeon_cs_int *cs)
 {
     struct cs_gem *csg = (struct cs_gem*)cs;
@@ -415,6 +416,7 @@ out_err:
     bof_decref(device_id);
     bof_decref(root);
 }
+#endif
 
 static int cs_gem_emit(struct radeon_cs_int *cs)
 {
@@ -517,7 +519,7 @@ static struct radeon_cs_funcs radeon_cs_gem_funcs = {
 
 static int radeon_get_device_id(int fd, uint32_t *device_id)
 {
-    struct drm_radeon_info info;
+    struct drm_radeon_info info = {};
     int r;
 
     *device_id = 0;
