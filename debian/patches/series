@@ -1,4 +1,2 @@
 01_default_perms.diff
-03_build_against_librt.diff
-revert-nouveau-rewrite.diff
-intel-cloexec-kbsd.diff
+03_hide_symbols.diff

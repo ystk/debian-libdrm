@@ -347,8 +347,10 @@ pushbuf_submit(struct nouveau_pushbuf *push, struct nouveau_object *chan)
 					  &req, sizeof(req));
 		nvpb->suffix0 = req.suffix0;
 		nvpb->suffix1 = req.suffix1;
-		dev->vram_limit = (req.vram_available * 80) / 100;
-		dev->gart_limit = (req.gart_available * 80) / 100;
+		dev->vram_limit = (req.vram_available *
+				nouveau_device(dev)->vram_limit_percent) / 100;
+		dev->gart_limit = (req.gart_available *
+				nouveau_device(dev)->gart_limit_percent) / 100;
 #else
 		if (dbg_on(31))
 			ret = -EINVAL;
@@ -524,7 +526,7 @@ pushbuf_validate(struct nouveau_pushbuf *push, bool retry)
 		}
 	}
 
-	return 0;
+	return ret;
 }
 
 int
@@ -574,13 +576,13 @@ nouveau_pushbuf_new(struct nouveau_client *client, struct nouveau_object *chan,
 	push->client = client;
 	push->channel = immediate ? chan : NULL;
 	push->flags = NOUVEAU_BO_RD;
-	if (fifo->pushbuf & NOUVEAU_GEM_DOMAIN_VRAM) {
-		push->flags |= NOUVEAU_BO_VRAM;
-		nvpb->type   = NOUVEAU_BO_VRAM;
-	}
 	if (fifo->pushbuf & NOUVEAU_GEM_DOMAIN_GART) {
 		push->flags |= NOUVEAU_BO_GART;
 		nvpb->type   = NOUVEAU_BO_GART;
+	} else
+	if (fifo->pushbuf & NOUVEAU_GEM_DOMAIN_VRAM) {
+		push->flags |= NOUVEAU_BO_VRAM;
+		nvpb->type   = NOUVEAU_BO_VRAM;
 	}
 	nvpb->type |= NOUVEAU_BO_MAP;
 
@@ -737,7 +739,8 @@ void
 nouveau_pushbuf_reloc(struct nouveau_pushbuf *push, struct nouveau_bo *bo,
 		      uint32_t data, uint32_t flags, uint32_t vor, uint32_t tor)
 {
-	*push->cur++ = pushbuf_krel(push, bo, data, flags, vor, tor);
+	*push->cur = pushbuf_krel(push, bo, data, flags, vor, tor);
+	push->cur++;
 }
 
 int
