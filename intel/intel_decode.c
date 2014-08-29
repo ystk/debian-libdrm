@@ -29,6 +29,7 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include "xf86drm.h"
 #include "intel_chipset.h"
 #include "intel_bufmgr.h"
 
@@ -104,11 +105,7 @@ static float int_as_float(uint32_t intval)
 	return uval.f;
 }
 
-static void
-instr_out(struct drm_intel_decode *ctx, unsigned int index,
-	  const char *fmt, ...) __attribute__((format(__printf__, 3, 4)));
-
-static void
+static void DRM_PRINTFLIKE(3, 4)
 instr_out(struct drm_intel_decode *ctx, unsigned int index,
 	  const char *fmt, ...)
 {
@@ -257,6 +254,8 @@ decode_mi(struct drm_intel_decode *ctx)
 		{ 0x03, 0, 1, 1, "MI_WAIT_FOR_EVENT", decode_MI_WAIT_FOR_EVENT },
 		{ 0x16, 0x7f, 3, 3, "MI_SEMAPHORE_MBOX" },
 		{ 0x26, 0x1f, 3, 4, "MI_FLUSH_DW" },
+		{ 0x28, 0x3f, 3, 3, "MI_REPORT_PERF_COUNT" },
+		{ 0x29, 0xff, 3, 3, "MI_LOAD_REGISTER_MEM" },
 		{ 0x0b, 0, 1, 1, "MI_SUSPEND_FLUSH"},
 	}, *opcode_mi = NULL;
 
@@ -3162,7 +3161,7 @@ decode_3d_965(struct drm_intel_decode *ctx)
 		{ 0x7805, 0x00ff, 3, 3, "3DSTATE_URB" },
 		{ 0x7804, 0x00ff, 3, 3, "3DSTATE_CLEAR_PARAMS" },
 		{ 0x7806, 0x00ff, 3, 3, "3DSTATE_STENCIL_BUFFER" },
-		{ 0x7807, 0x00ff, 4, 4, "3DSTATE_HIER_DEPTH_BUFFER", 6 },
+		{ 0x790f, 0x00ff, 3, 3, "3DSTATE_HIER_DEPTH_BUFFER", 6 },
 		{ 0x7807, 0x00ff, 3, 3, "3DSTATE_HIER_DEPTH_BUFFER", 7, gen7_3DSTATE_HIER_DEPTH_BUFFER },
 		{ 0x7808, 0x00ff, 5, 257, "3DSTATE_VERTEX_BUFFERS" },
 		{ 0x7809, 0x00ff, 3, 256, "3DSTATE_VERTEX_ELEMENTS" },
@@ -3224,7 +3223,7 @@ decode_3d_965(struct drm_intel_decode *ctx)
 		{ 0x790b, 0xffff, 4, 4, "3DSTATE_GS_SVB_INDEX" },
 		{ 0x790d, 0xffff, 3, 3, "3DSTATE_MULTISAMPLE", 6 },
 		{ 0x790d, 0xffff, 4, 4, "3DSTATE_MULTISAMPLE", 7 },
-		{ 0x7910, 0xffff, 2, 2, "3DSTATE_CLEAR_PARAMS" },
+		{ 0x7910, 0x00ff, 2, 2, "3DSTATE_CLEAR_PARAMS" },
 		{ 0x7912, 0x00ff, 2, 2, "3DSTATE_PUSH_CONSTANT_ALLOC_VS" },
 		{ 0x7913, 0x00ff, 2, 2, "3DSTATE_PUSH_CONSTANT_ALLOC_HS" },
 		{ 0x7914, 0x00ff, 2, 2, "3DSTATE_PUSH_CONSTANT_ALLOC_DS" },
@@ -3825,7 +3824,9 @@ drm_intel_decode_context_alloc(uint32_t devid)
 	ctx->devid = devid;
 	ctx->out = stdout;
 
-	if (IS_GEN7(devid))
+	if (IS_GEN8(devid))
+		ctx->gen = 8;
+	else if (IS_GEN7(devid))
 		ctx->gen = 7;
 	else if (IS_GEN6(devid))
 		ctx->gen = 6;

@@ -20,7 +20,7 @@
 
 AC_PREREQ([2.63])
 AC_INIT([libdrm],
-        [2.4.40],
+        [2.4.56],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=DRI],
         [libdrm])
 
@@ -34,27 +34,6 @@ AM_MAINTAINER_MODE([enable])
 
 # Enable quiet compiles on automake 1.11.
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
-
-if test x$LIB_MAN_SUFFIX = x    ; then
-    LIB_MAN_SUFFIX=3
-fi
-if test x$LIB_MAN_DIR = x    ; then
-    LIB_MAN_DIR='$(mandir)/man$(LIB_MAN_SUFFIX)'
-fi
-AC_SUBST([LIB_MAN_SUFFIX])
-AC_SUBST([LIB_MAN_DIR])
-
-MAN_SUBSTS="\
-	-e 's|__vendorversion__|\"\$(PACKAGE_STRING)\" |' \
-	-e 's|__projectroot__|\$(prefix)|g' \
-	-e 's|__apploaddir__|\$(appdefaultdir)|g' \
-	-e 's|__appmansuffix__|\$(APP_MAN_SUFFIX)|g' \
-	-e 's|__drivermansuffix__|\$(DRIVER_MAN_SUFFIX)|g' \
-	-e 's|__adminmansuffix__|\$(ADMIN_MAN_SUFFIX)|g' \
-	-e 's|__libmansuffix__|\$(LIB_MAN_SUFFIX)|g' \
-	-e 's|__miscmansuffix__|\$(MISC_MAN_SUFFIX)|g' \
-	-e 's|__filemansuffix__|\$(FILE_MAN_SUFFIX)|g'"
-AC_SUBST([MAN_SUBSTS])
 
 # Check for programs
 AC_PROG_CC
@@ -114,6 +93,16 @@ AC_ARG_ENABLE(exynos-experimental-api,
 	      [Enable support for EXYNOS's experimental API (default: disabled)]),
 	      [EXYNOS=$enableval], [EXYNOS=no])
 
+AC_ARG_ENABLE(freedreno-experimental-api,
+	      AS_HELP_STRING([--enable-freedreno-experimental-api],
+	      [Enable support for freedreno's experimental API (default: disabled)]),
+	      [FREEDRENO=$enableval], [FREEDRENO=no])
+
+AC_ARG_ENABLE(install-test-programs,
+		  AS_HELP_STRING([--enable-install-test-programs],
+		  [Install test programs (default: no)]),
+		  [INSTALL_TESTS=$enableval], [INSTALL_TESTS=no])
+
 dnl ===========================================================================
 dnl check compiler flags
 AC_DEFUN([LIBDRM_CC_TRY_FLAG], [
@@ -122,7 +111,7 @@ AC_DEFUN([LIBDRM_CC_TRY_FLAG], [
   libdrm_save_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS $1"
 
-  AC_COMPILE_IFELSE([ ], [libdrm_cc_flag=yes], [libdrm_cc_flag=no])
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([ ])], [libdrm_cc_flag=yes], [libdrm_cc_flag=no])
   CFLAGS="$libdrm_save_CFLAGS"
 
   if test "x$libdrm_cc_flag" = "xyes"; then
@@ -196,6 +185,9 @@ AC_CANONICAL_HOST
 if test "x$LIBKMS" = xauto ; then
 	case $host_os in
 		linux*)		LIBKMS="yes" ;;
+		freebsd* | kfreebsd*-gnu)
+				LIBKMS="yes" ;;
+		dragonfly*)	LIBKMS="yes" ;;
 		*)		LIBKMS="no" ;;
 	esac
 fi
@@ -220,6 +212,16 @@ fi
 AM_CONDITIONAL(HAVE_EXYNOS, [test "x$EXYNOS" = xyes])
 if test "x$EXYNOS" = xyes; then
 	AC_DEFINE(HAVE_EXYNOS, 1, [Have EXYNOS support])
+fi
+
+AM_CONDITIONAL(HAVE_FREEDRENO, [test "x$FREEDRENO" = xyes])
+if test "x$FREEDRENO" = xyes; then
+	AC_DEFINE(HAVE_FREEDRENO, 1, [Have freedreno support])
+fi
+
+AM_CONDITIONAL(HAVE_INSTALL_TESTS, [test "x$INSTALL_TESTS" = xyes])
+if test "x$INSTALL_TESTS" = xyes; then
+	AC_DEFINE(HAVE_INSTALL_TESTS, 1, [Install test programs])
 fi
 
 AC_ARG_ENABLE([cairo-tests],
@@ -247,7 +249,28 @@ if test "x$HAVE_LIBUDEV" = xyes; then
 fi
 AM_CONDITIONAL(HAVE_LIBUDEV, [test "x$HAVE_LIBUDEV" = xyes])
 
-if test "x$INTEL" != "xno" -o "x$RADEON" != "xno" -o "x$NOUVEAU" != "xno" -o "x$OMAP" != "xno"; then
+# xsltproc for docbook manpages
+AC_ARG_ENABLE([manpages],
+              AS_HELP_STRING([--disable-manpages], [disable manpages @<:@default=enabled@:>@]),
+              [MANS=$enableval], [MANS=auto])
+AC_PATH_PROG(XSLTPROC, xsltproc)
+AM_CONDITIONAL([BUILD_MANPAGES], [test "x$XSLTPROC" != "x" -a "x$MANS" != "xno"])
+
+# check for offline man-pages stylesheet
+AC_MSG_CHECKING([for docbook manpages stylesheet])
+MANPAGES_STYLESHEET="http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl"
+AC_PATH_PROGS_FEATURE_CHECK([XSLTPROC_TMP], [xsltproc],
+                            AS_IF([`"$ac_path_XSLTPROC_TMP" --nonet "$MANPAGES_STYLESHEET" > /dev/null 2>&1`],
+                                  [HAVE_MANPAGES_STYLESHEET=yes]))
+if test "x$HAVE_MANPAGES_STYLESHEET" = "xyes"; then
+        AC_SUBST(MANPAGES_STYLESHEET)
+        AC_MSG_RESULT([yes])
+else
+        AC_MSG_RESULT([no])
+fi
+AM_CONDITIONAL([HAVE_MANPAGES_STYLESHEET], [test "x$HAVE_MANPAGES_STYLESHEET" = "xyes"])
+
+if test "x$INTEL" != "xno" -o "x$RADEON" != "xno" -o "x$NOUVEAU" != "xno" -o "x$OMAP" != "xno" -o "x$FREEDRENO" != "xno"; then
     # Check for atomic intrinsics
     AC_CACHE_CHECK([for native atomic primitives], drm_cv_atomic_primitives,
     [
@@ -358,12 +381,15 @@ AC_CONFIG_FILES([
 	omap/libdrm_omap.pc
 	exynos/Makefile
 	exynos/libdrm_exynos.pc
+	freedreno/Makefile
+	freedreno/libdrm_freedreno.pc
 	tests/Makefile
 	tests/modeprint/Makefile
 	tests/modetest/Makefile
 	tests/kmstest/Makefile
 	tests/radeon/Makefile
 	tests/vbltest/Makefile
+	tests/exynos/Makefile
 	include/Makefile
 	include/drm/Makefile
 	man/Makefile
@@ -380,4 +406,5 @@ echo "  Radeon API     $RADEON"
 echo "  Nouveau API    $NOUVEAU"
 echo "  OMAP API       $OMAP"
 echo "  EXYNOS API     $EXYNOS"
+echo "  Freedreno API  $FREEDRENO"
 echo ""
