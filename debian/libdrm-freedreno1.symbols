@@ -2,6 +2,8 @@ libdrm_freedreno.so.1 libdrm-freedreno1 #MINVER#
  fd_bo_cpu_fini@Base 0
  fd_bo_cpu_prep@Base 0
  fd_bo_del@Base 0
+ fd_bo_dmabuf@Base 2.4.57
+ fd_bo_from_dmabuf@Base 2.4.57
  fd_bo_from_fbdev@Base 0
  fd_bo_from_handle@Base 0
  fd_bo_from_name@Base 0
