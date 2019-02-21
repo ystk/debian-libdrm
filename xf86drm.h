@@ -39,6 +39,10 @@
 #include <stdint.h>
 #include <drm.h>
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #ifndef DRM_MAX_MINOR
 #define DRM_MAX_MINOR   16
 #endif
@@ -72,10 +76,18 @@
 	(S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
 #define DRM_DEV_MODE	 (S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP)
 
+#ifdef __OpenBSD__
+#define DRM_DIR_NAME  "/dev"
+#define DRM_DEV_NAME  "%s/drm%d"
+#define DRM_CONTROL_DEV_NAME  "%s/drmC%d"
+#define DRM_RENDER_DEV_NAME  "%s/drmR%d"
+#else
 #define DRM_DIR_NAME  "/dev/dri"
 #define DRM_DEV_NAME  "%s/card%d"
 #define DRM_CONTROL_DEV_NAME  "%s/controlD%d"
+#define DRM_RENDER_DEV_NAME  "%s/renderD%d"
 #define DRM_PROC_NAME "/proc/dri/" /* For backward Linux compatibility */
+#endif
 
 #define DRM_ERR_NO_DEVICE  (-1001)
 #define DRM_ERR_NO_ACCESS  (-1002)
@@ -88,8 +100,14 @@
 typedef unsigned int  drmSize,     *drmSizePtr;	    /**< For mapped regions */
 typedef void          *drmAddress, **drmAddressPtr; /**< For mapped regions */
 
+#if (__GNUC__ >= 3)
+#define DRM_PRINTFLIKE(f, a) __attribute__ ((format(__printf__, f, a)))
+#else
+#define DRM_PRINTFLIKE(f, a)
+#endif
+
 typedef struct _drmServerInfo {
-  int (*debug_print)(const char *format, va_list ap);
+  int (*debug_print)(const char *format, va_list ap) DRM_PRINTFLIKE(1,0);
   int (*load_module)(const char *name);
   void (*get_perms)(gid_t *, mode_t *);
 } drmServerInfo, *drmServerInfoPtr;
@@ -296,12 +314,15 @@ typedef struct _drmTextureRegion {
 typedef enum {
     DRM_VBLANK_ABSOLUTE = 0x0,	/**< Wait for specific vblank sequence number */
     DRM_VBLANK_RELATIVE = 0x1,	/**< Wait for given number of vblanks */
+    /* bits 1-6 are reserved for high crtcs */
+    DRM_VBLANK_HIGH_CRTC_MASK = 0x0000003e,
     DRM_VBLANK_EVENT = 0x4000000,	/**< Send event instead of blocking */
     DRM_VBLANK_FLIP = 0x8000000,	/**< Scheduled buffer swap should flip */
     DRM_VBLANK_NEXTONMISS = 0x10000000,	/**< If missed, wait for next vblank */
     DRM_VBLANK_SECONDARY = 0x20000000,	/**< Secondary display controller */
     DRM_VBLANK_SIGNAL   = 0x40000000	/* Send signal instead of blocking */
 } drmVBlankSeqType;
+#define DRM_VBLANK_HIGH_CRTC_SHIFT 1
 
 typedef struct _drmVBlankReq {
 	drmVBlankSeqType type;
@@ -538,10 +559,21 @@ do {	register unsigned int __old __asm("o0");		\
 /* General user-level programmer's API: unprivileged */
 extern int           drmAvailable(void);
 extern int           drmOpen(const char *name, const char *busid);
-extern int drmOpenControl(int minor);
+
+#define DRM_NODE_PRIMARY 0
+#define DRM_NODE_CONTROL 1
+#define DRM_NODE_RENDER  2
+#define DRM_NODE_MAX     3
+
+extern int           drmOpenWithType(const char *name, const char *busid,
+                                     int type);
+
+extern int           drmOpenControl(int minor);
+extern int           drmOpenRender(int minor);
 extern int           drmClose(int fd);
 extern drmVersionPtr drmGetVersion(int fd);
 extern drmVersionPtr drmGetLibVersion(int fd);
+extern int           drmGetCap(int fd, uint64_t capability, uint64_t *value);
 extern void          drmFreeVersion(drmVersionPtr);
 extern int           drmGetMagic(int fd, drm_magic_t * magic);
 extern char          *drmGetBusid(int fd);
@@ -601,6 +633,8 @@ extern int           drmUpdateDrawableInfo(int fd, drm_drawable_t handle,
 					   unsigned int num, void *data);
 extern int           drmCtlInstHandler(int fd, int irq);
 extern int           drmCtlUninstHandler(int fd);
+extern int           drmSetClientCap(int fd, uint64_t capability,
+				     uint64_t value);
 
 /* General user-level programmer's API: authenticated client and/or X */
 extern int           drmMap(int fd,
@@ -687,8 +721,9 @@ extern int  drmSLLookupNeighbors(void *l, unsigned long key,
 				 unsigned long *next_key, void **next_value);
 
 extern int drmOpenOnce(void *unused, const char *BusID, int *newlyopened);
+extern int drmOpenOnceWithType(const char *BusID, int *newlyopened, int type);
 extern void drmCloseOnce(int fd);
-extern void drmMsg(const char *format, ...);
+extern void drmMsg(const char *format, ...) DRM_PRINTFLIKE(1, 2);
 
 extern int drmSetMaster(int fd);
 extern int drmDropMaster(int fd);
@@ -718,5 +753,56 @@ typedef struct _drmEventContext {
 extern int drmHandleEvent(int fd, drmEventContextPtr evctx);
 
 extern char *drmGetDeviceNameFromFd(int fd);
+
+/* Improved version of drmGetDeviceNameFromFd which attributes for any type of
+ * device/node - card, control or renderD.
+ */
+extern char *drmGetDeviceNameFromFd2(int fd);
+extern int drmGetNodeTypeFromFd(int fd);
+
+extern int drmPrimeHandleToFD(int fd, uint32_t handle, uint32_t flags, int *prime_fd);
+extern int drmPrimeFDToHandle(int fd, int prime_fd, uint32_t *handle);
+
+extern char *drmGetPrimaryDeviceNameFromFd(int fd);
+extern char *drmGetRenderDeviceNameFromFd(int fd);
+
+#define DRM_BUS_PCI   0
+
+typedef struct _drmPciBusInfo {
+    uint16_t domain;
+    uint8_t bus;
+    uint8_t dev;
+    uint8_t func;
+} drmPciBusInfo, *drmPciBusInfoPtr;
+
+typedef struct _drmPciDeviceInfo {
+    uint16_t vendor_id;
+    uint16_t device_id;
+    uint16_t subvendor_id;
+    uint16_t subdevice_id;
+    uint8_t revision_id;
+} drmPciDeviceInfo, *drmPciDeviceInfoPtr;
+
+typedef struct _drmDevice {
+    char **nodes; /* DRM_NODE_MAX sized array */
+    int available_nodes; /* DRM_NODE_* bitmask */
+    int bustype;
+    union {
+        drmPciBusInfoPtr pci;
+    } businfo;
+    union {
+        drmPciDeviceInfoPtr pci;
+    } deviceinfo;
+} drmDevice, *drmDevicePtr;
+
+extern int drmGetDevice(int fd, drmDevicePtr *device);
+extern void drmFreeDevice(drmDevicePtr *device);
+
+extern int drmGetDevices(drmDevicePtr devices[], int max_devices);
+extern void drmFreeDevices(drmDevicePtr devices[], int count);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif

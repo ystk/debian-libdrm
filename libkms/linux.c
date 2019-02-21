@@ -30,16 +30,25 @@
  */
 
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <xf86drm.h>
 #include <string.h>
 #include <unistd.h>
-
 #include <sys/stat.h>
+#include <sys/types.h>
+#ifdef MAJOR_IN_MKDEV
+#include <sys/mkdev.h>
+#endif
+#ifdef MAJOR_IN_SYSMACROS
+#include <sys/sysmacros.h>
+#endif
 
+#include "libdrm_macros.h"
 #include "internal.h"
 
 #define PATH_SIZE 512
@@ -68,7 +77,7 @@ linux_name_from_sysfs(int fd, char **out)
 
 	ret = fstat(fd, &buffer);
 	if (ret)
-		return ret;
+		return -EINVAL;
 
 	if (!S_ISCHR(buffer.st_mode))
 		return -EINVAL;
@@ -101,17 +110,31 @@ linux_from_sysfs(int fd, struct kms_driver **out)
 	if (ret)
 		return ret;
 
+#ifdef HAVE_INTEL
 	if (!strcmp(name, "intel"))
 		ret = intel_create(fd, out);
+	else
+#endif
 #ifdef HAVE_VMWGFX
-	else if (!strcmp(name, "vmwgfx"))
+	if (!strcmp(name, "vmwgfx"))
 		ret = vmwgfx_create(fd, out);
+	else
 #endif
 #ifdef HAVE_NOUVEAU
-	else if (!strcmp(name, "nouveau"))
+	if (!strcmp(name, "nouveau"))
 		ret = nouveau_create(fd, out);
-#endif
 	else
+#endif
+#ifdef HAVE_RADEON
+	if (!strcmp(name, "radeon"))
+		ret = radeon_create(fd, out);
+	else
+#endif
+#ifdef HAVE_EXYNOS
+	if (!strcmp(name, "exynos"))
+		ret = exynos_create(fd, out);
+	else
+#endif
 		ret = -ENOSYS;
 
 	free(name);
@@ -129,7 +152,7 @@ struct create_record
 	int (*func)(int fd, struct kms_driver **out);
 };
 
-static struct create_record table[] = {
+static const struct create_record table[] = {
 	{ 0x8086, 0x2a42, intel_create }, /* i965 */
 #ifdef HAVE_VMWGFX
 	{ 0x15ad, 0x0405, vmwgfx_create }, /* VMware vGPU */
@@ -209,9 +232,12 @@ linux_from_udev(int fd, struct kms_driver **out)
 }
 #endif
 
-int
+drm_private int
 linux_create(int fd, struct kms_driver **out)
 {
+	if (!dumb_create(fd, out))
+		return 0;
+
 	if (!linux_from_udev(fd, out))
 		return 0;
 

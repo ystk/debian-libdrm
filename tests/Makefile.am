@@ -1,6 +1,33 @@
-NULL:=#
+SUBDIRS = util kms modeprint proptest modetest vbltest
 
-AM_CPPFLAGS = \
+if HAVE_LIBKMS
+SUBDIRS += kmstest
+endif
+
+if HAVE_RADEON
+SUBDIRS += radeon
+endif
+
+if HAVE_AMDGPU
+if HAVE_CUNIT
+SUBDIRS += amdgpu
+endif
+endif
+
+if HAVE_EXYNOS
+SUBDIRS += exynos
+endif
+
+if HAVE_TEGRA
+SUBDIRS += tegra
+endif
+
+if HAVE_ETNAVIV
+SUBDIRS += etnaviv
+endif
+
+AM_CFLAGS = \
+	$(WARN_CFLAGS)\
 	-I $(top_srcdir)/include/drm \
 	-I $(top_srcdir)
 
@@ -8,16 +35,19 @@ LDADD = $(top_builddir)/libdrm.la
 
 check_PROGRAMS = \
 	dristat \
+	drmdevice \
 	drmstat
 
-SUBDIRS =
+dristat_LDADD = -lm
 
-if HAVE_LIBKMS
-SUBDIRS += kmstest
+if HAVE_NOUVEAU
+SUBDIRS += nouveau
 endif
 
-if HAVE_INTEL
-endif
+TESTS = \
+	drmsl \
+	hash \
+	random
 
 if HAVE_LIBUDEV
 
@@ -27,42 +57,23 @@ libdrmtest_la_SOURCES = \
 	drmtest.c \
 	drmtest.h
 
-libdrmtest_la_LIBADD = \
-	$(top_builddir)/libdrm.la \
+LDADD += \
+	libdrmtest.la \
 	$(LIBUDEV_LIBS)
 
-LDADD += libdrmtest.la
 
 XFAIL_TESTS =					\
 	auth					\
 	lock
 
-TESTS =						\
+TESTS +=					\
 	openclose				\
 	getversion				\
 	getclient				\
 	getstats				\
 	setversion				\
 	updatedraw				\
-	name_from_fd				\
-	$(NULL)
-
-SUBDIRS += vbltest $(NULL)
-
-if HAVE_INTEL
-SUBDIRS += \
-	modeprint				\
-	modetest				\
-	$(NULL)
-
-TESTS +=					\
-	gem_basic				\
-	gem_flink				\
-	gem_readwrite				\
-	gem_mmap				\
-	$(NULL)
+	name_from_fd
 endif
 
 check_PROGRAMS += $(TESTS)
-
-endif
